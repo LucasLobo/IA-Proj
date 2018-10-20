@@ -181,17 +181,7 @@ class solitaire(Problem):
 
     def path_cost(self, c, state1, action, state2):
         # TODO: function not done
-        return c + 1
+        return 1
 
     def h(self, node):
-        # TODO: function not done
-        print(type(node.state))
-        return node.state
-
-board = [["O","O","O","X"],
-["O","O","O","O"],
-["O","_","O","O"],
-["O","O","O","O"]]
-problem = solitaire(board)
-#print(depth_first_graph_search(problem))
-print(greedy_search(problem))
+        return node.state.get_number_of_pegs()
