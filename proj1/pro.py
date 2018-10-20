@@ -1,5 +1,6 @@
 from search import *
 import copy
+
 # TAI content
 def c_peg():
     return "O"
@@ -42,6 +43,7 @@ def move_final(move):
     return move[1]
 
 # TAI board
+# Lista de listas [N X M]
 def get_board_pos(board, pos):
     line = pos_l(pos)
     column = pos_c(pos)
@@ -133,10 +135,11 @@ class sol_state:
         return "<SOL_state {}>".format(self.board)
 
     def __lt__(self, other_state):
-        return 1
+        return self.number_of_pegs > other_state.get_number_of_pegs()
 
     def __str__(self):
-        return '\n'.join(str(line) for line in self.board)
+        # return '\n'.join(str(line) for line in self.board)
+        return str(self.board)
 
     def count_pegs(self):
         number_of_pegs = 0
@@ -159,14 +162,16 @@ class solitaire(Problem):
         """The constructor specifies the initial state, and possibly a goal
         state, if there is a unique goal.  Your subclass's constructor can add
         other arguments."""
-        self.initial = initial
+        self.initial = sol_state(initial)
         self.goal = goal
+        if goal:
+            self.goal = sol_state(goal)
 
     def actions(self, state):
         return board_moves(state.get_board())
 
     def result(self, state, action):
-        return sol_state(board_perform_move(board, action))
+        return sol_state(board_perform_move(state.get_board(), action))
 
     def goal_test(self, state):
         if state.get_number_of_pegs() == 1:
@@ -175,21 +180,18 @@ class solitaire(Problem):
             return False
 
     def path_cost(self, c, state1, action, state2):
-        """Return the cost of a solution path that arrives at state2 from
-        state1 via action, assuming cost c to get up to state1. If the problem
-        is such that the path doesn't matter, this function will only look at
-        state2.  If the path does matter, it will consider c and maybe state1
-        and action. The default method costs 1 for every step in the path."""
+        # TODO: function not done
         return c + 1
 
-    def value(self, state):
-        """For optimization problems, each state has a value.  Hill-climbing
-        and related algorithms try to maximize this value."""
-        raise NotImplementedError
+    def h(self, node):
+        # TODO: function not done
+        print(type(node.state))
+        return node.state
 
-
-board = [["_","O","O","O","_"], ["O","_","O","_","O"], ["_","O","_","O","_"], ["O","_","O","_","_"], ["_","O","_","_","_"]]
-state = sol_state(board)
-problem = solitaire(state)
-actions = problem.actions(state)
-print(problem.result(state, actions[0]))
+board = [["O","O","O","X"],
+["O","O","O","O"],
+["O","_","O","O"],
+["O","O","O","O"]]
+problem = solitaire(board)
+#print(depth_first_graph_search(problem))
+print(greedy_search(problem))
