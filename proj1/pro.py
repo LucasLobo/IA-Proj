@@ -130,28 +130,32 @@ class sol_state:
     def __init__(self, b):
      self.board = b
      self.number_of_pegs = self.count_pegs()
+     self.actions = []
 
     def __repr__(self):
         return "<SOL_state {}>".format(self.board)
 
-    def __lt__(self, other_state):
-        return self.number_of_pegs > other_state.get_number_of_pegs()
-
     def __str__(self):
-        # return '\n'.join(str(line) for line in self.board)
         return str(self.board)
 
     def count_pegs(self):
         number_of_pegs = 0
-        for line in self.board:
-            number_of_pegs += line.count(c_peg())
+        lines = len(self.board)
+        columns = len(self.board[0])
+        for line in range(lines):
+            for column in range(columns):
+                if is_peg(self.board[line][column]):
+                    number_of_pegs += 1
+
         return number_of_pegs
 
-    def get_number_of_pegs(self):
-        return self.number_of_pegs
+    def __lt__(self, other):
+        return self.number_of_pegs > other.number_of_pegs
 
-    def get_board(self):
-        return self.board
+    def get_actions(self):
+        if self.actions == []:
+            self.actions = board_moves(self.board)
+        return self.actions
 
 
 class solitaire(Problem):
@@ -168,20 +172,74 @@ class solitaire(Problem):
             self.goal = sol_state(goal)
 
     def actions(self, state):
-        return board_moves(state.get_board())
+        return state.get_actions()
 
     def result(self, state, action):
-        return sol_state(board_perform_move(state.get_board(), action))
+        return sol_state(board_perform_move(state.board, action))
 
     def goal_test(self, state):
-        if state.get_number_of_pegs() == 1:
+        if state.number_of_pegs == 1:
             return True
         else:
             return False
 
     def path_cost(self, c, state1, action, state2):
-        # TODO: function not done
-        return 1
+        return c + 1 / (len(state1.get_actions()) + len(state2.get_actions()) + 1)
 
     def h(self, node):
-        return node.state.get_number_of_pegs()
+        return node.state.number_of_pegs - len(node.state.get_actions())
+
+
+board_5_5 = [["_","O","O","O","_"],  ["O","_","O","_","O"],  ["_","O","_","O","_"],  ["O","_","O","_","_"],  ["_","O","_","_","_"]]
+
+board_4_4 = [["O","O","O","X"],  ["O","O","O","O"],  ["O","_","O","O"],  ["O","O","O","O"]]
+
+board_4_5 = [["O","O","O","X","X"],  ["O","O","O","O","O"],  ["O","_","O","_","O"],  ["O","O","O","O","O"]]
+
+board_4_6 = [["O","O","O","X","X","X"],  ["O","_","O","O","O","O"],  ["O","O","O","O","O","O"],  ["O","O","O","O","O","O"]]
+
+
+
+
+
+
+def bleble(problems, header,
+                      searchers=[depth_first_graph_search,
+                                 astar_search,
+                                 greedy_search]):
+    def do(searcher, problem):
+        p = InstrumentedProblem(problem)
+        searcher(p)
+        return p
+    table = [[name(s)] + [do(s, p) for p in problems] for s in searchers]
+    print_table(table, header)
+
+
+def blablabla():
+    """Prints a table of search results."""
+    bleble(problems=[solitaire(board_5_5)],
+                      header=['Searcher', '5x5'])
+
+    print("")
+    bleble(problems=[solitaire(board_4_4)],
+                      header=['Searcher', '4x4'])
+
+    print("")
+    bleble(problems=[solitaire(board_4_5)],
+                      header=['Searcher', '4x5'])
+
+    print("")
+    bleble(problems=[solitaire(board_4_6)],
+                      header=['Searcher', '4x6'])
+
+
+board = board_5_5
+problem =solitaire(board);
+i = 1
+
+if i == 0:
+    astar_search(problem)
+elif i == 1:
+    greedy_search(problem)
+elif i == 2:
+    depth_first_graph_search(problem)
