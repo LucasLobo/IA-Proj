@@ -1,4 +1,5 @@
 from search import *
+import hashlib
 import copy
 
 # TAI content
@@ -127,10 +128,28 @@ def board_perform_move(board, move):
 
 # TAI sol_state
 class sol_state:
-    def __init__(self, b):
-     self.board = b
-     self.number_of_pegs = self.count_pegs()
-     self.actions = []
+    def __init__(self, b, number_of_pegs = None):
+        self.board = b
+
+        if number_of_pegs is not None:
+            self.number_of_pegs = number_of_pegs
+        else:
+            self.number_of_pegs = self.count_pegs()
+
+        self.actions = ''
+        self.actions_len = ''
+
+    # def __key(self):
+    #     return str(self)
+    #
+    # def __hash__(self):
+    #     return hash(self.__key())
+    #
+    # def __eq__(self, other):
+    #     return self.__key() == other.__key()
+
+    def __lt__(self, other):
+        return self.number_of_pegs > other.number_of_pegs
 
     def __repr__(self):
         return "<SOL_state {}>".format(self.board)
@@ -140,32 +159,25 @@ class sol_state:
 
     def count_pegs(self):
         number_of_pegs = 0
-        lines = len(self.board)
-        columns = len(self.board[0])
-        for line in range(lines):
-            for column in range(columns):
-                if is_peg(self.board[line][column]):
-                    number_of_pegs += 1
-
+        for line in self.board:
+            number_of_pegs += line.count(c_peg())
         return number_of_pegs
 
-    def __lt__(self, other):
-        return self.number_of_pegs > other.number_of_pegs
-
     def get_actions(self):
-        if self.actions == []:
+        if self.actions == '':
             self.actions = board_moves(self.board)
+            self.actions_len = len(self.actions)
         return self.actions
+
+    def get_actions_len(self):
+        if self.actions == '':
+            self.actions = board_moves(self.board)
+            self.actions_len = len(self.actions)
+        return self.actions_len
 
 
 class solitaire(Problem):
-    """Models a Solitaire problem as a satisfaction problem.
-    A solution cannot have more than 1 peg left on the board."""
-
     def __init__(self, initial, goal=None):
-        """The constructor specifies the initial state, and possibly a goal
-        state, if there is a unique goal.  Your subclass's constructor can add
-        other arguments."""
         self.initial = sol_state(initial)
         self.goal = goal
         if goal:
@@ -175,7 +187,7 @@ class solitaire(Problem):
         return state.get_actions()
 
     def result(self, state, action):
-        return sol_state(board_perform_move(state.board, action))
+        return sol_state(board_perform_move(state.board, action), state.number_of_pegs - 1)
 
     def goal_test(self, state):
         if state.number_of_pegs == 1:
@@ -184,11 +196,10 @@ class solitaire(Problem):
             return False
 
     def path_cost(self, c, state1, action, state2):
-        return c + 1 / (len(state1.get_actions()) + len(state2.get_actions()) + 1)
+        return 1/max(1,state1.number_of_pegs - state1.get_actions_len())
 
     def h(self, node):
-        return node.state.number_of_pegs - len(node.state.get_actions())
-
+        return max(1,node.state.number_of_pegs - node.state.get_actions_len())
 
 board_5_5 = [["_","O","O","O","_"],  ["O","_","O","_","O"],  ["_","O","_","O","_"],  ["O","_","O","_","_"],  ["_","O","_","_","_"]]
 
@@ -198,15 +209,13 @@ board_4_5 = [["O","O","O","X","X"],  ["O","O","O","O","O"],  ["O","_","O","_","O
 
 board_4_6 = [["O","O","O","X","X","X"],  ["O","_","O","O","O","O"],  ["O","O","O","O","O","O"],  ["O","O","O","O","O","O"]]
 
+board = [["O","O","O","X","X","X"],["O","_","O","O","O","O"],["O","O","O","O","O","O"],["O","O","O","O","O","O"]]
 
-
-
-
-
-def bleble(problems, header,
-                      searchers=[depth_first_graph_search,
-                                 astar_search,
-                                 greedy_search]):
+def compare_searchers(problems, header,
+                      searchers=[#depth_first_tree_search,
+                                 greedy_search,
+                                 astar_search
+                                 ]):
     def do(searcher, problem):
         p = InstrumentedProblem(problem)
         searcher(p)
@@ -215,31 +224,13 @@ def bleble(problems, header,
     print_table(table, header)
 
 
-def blablabla():
+def compare_graph_searchers():
     """Prints a table of search results."""
-    bleble(problems=[solitaire(board_5_5)],
-                      header=['Searcher', '5x5'])
+    compare_searchers(problems=[solitaire(board_5_5), solitaire(board_4_4), solitaire(board_4_5), solitaire(board_4_6)],
+                      header=['Searcher', '5x5', '4x4', '4x5', '4x6'])
 
-    print("")
-    bleble(problems=[solitaire(board_4_4)],
-                      header=['Searcher', '4x4'])
+#compare_graph_searchers()
 
-    print("")
-    bleble(problems=[solitaire(board_4_5)],
-                      header=['Searcher', '4x5'])
-
-    print("")
-    bleble(problems=[solitaire(board_4_6)],
-                      header=['Searcher', '4x6'])
-
-
-board = board_5_5
-problem =solitaire(board);
-i = 1
-
-if i == 0:
-    astar_search(problem)
-elif i == 1:
-    greedy_search(problem)
-elif i == 2:
-    depth_first_graph_search(problem)
+#depth_first_tree_search(solitaire(board_4_6))
+#greedy_search(solitaire(board_4_4))
+astar_search(solitaire(board_4_4))
